@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WT32 RTK 基地站</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-btn" id="menuBtn" aria-label="選單">&#9776;</button>
+  <div class="brand">WT32-ETH01 RTK 基地站</div>
+  <div class="top-status">
+    <span class="pill" id="pillEth">ETH</span>
+    <span class="pill" id="pillWifi">WiFi</span>
+    <span class="pill" id="pillGnss">GNSS</span>
+    <span class="pill" id="pillBase">BASE</span>
+  </div>
+</header>
+
+<nav class="sidebar" id="sidebar">
+  <div class="nav-group">
+    <div class="nav-title">系統狀態</div>
+    <a href="#net-info" data-page="net-info">網路連線資訊</a>
+    <a href="#spiffs" data-page="spiffs">SPIFFS 檔案系統</a>
+    <a href="#sys-info" data-page="sys-info">系統資訊</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-title">網路設定</div>
+    <a href="#eth" data-page="eth">RJ45 設定</a>
+    <a href="#wifi" data-page="wifi">WiFi 設定</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-title">RTK</div>
+    <a href="#rtk" data-page="rtk">RTK 地面基地站數據</a>
+    <a href="#rtk-cfg" data-page="rtk-cfg">基站 / 輸出設定</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-title">維護</div>
+    <a href="#ota" data-page="ota">OTA 更新</a>
+  </div>
+  <div class="nav-foot" id="navFoot"></div>
+</nav>
+<div class="backdrop" id="backdrop"></div>
+
+<main class="content">
+
+  <!-- ===================== 網路連線資訊 ===================== -->
+  <section class="page" id="page-net-info">
+    <h1>網路連線資訊</h1>
+    <div class="grid">
+      <div class="card">
+        <h2>RJ45 乙太網路 <span class="badge" id="ethBadge"></span></h2>
+        <table class="kv" id="ethTable"></table>
+      </div>
+      <div class="card">
+        <h2>WiFi STA <span class="badge" id="staBadge"></span></h2>
+        <table class="kv" id="staTable"></table>
+      </div>
+      <div class="card">
+        <h2>WiFi AP <span class="badge ok">運作中</span></h2>
+        <table class="kv" id="apTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SPIFFS ===================== -->
+  <section class="page" id="page-spiffs">
+    <h1>SPIFFS 檔案系統</h1>
+    <div class="card">
+      <h2>使用量</h2>
+      <div class="bar"><div class="bar-fill" id="fsBar"></div></div>
+      <p class="muted" id="fsText"></p>
+    </div>
+    <div class="card">
+      <h2>檔案列表</h2>
+      <table class="list">
+        <thead><tr><th>檔名</th><th class="r">大小</th><th></th></tr></thead>
+        <tbody id="fsList"></tbody>
+      </table>
+      <div class="row gap">
+        <input type="file" id="fsFiles" multiple>
+        <button id="fsUploadBtn">上傳檔案</button>
+        <button class="danger" id="fsFormatBtn">格式化 SPIFFS</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 系統資訊 ===================== -->
+  <section class="page" id="page-sys-info">
+    <h1>系統資訊</h1>
+    <div class="grid">
+      <div class="card"><h2>韌體</h2><table class="kv" id="fwTable"></table></div>
+      <div class="card"><h2>晶片</h2><table class="kv" id="chipTable"></table></div>
+      <div class="card"><h2>記憶體</h2><table class="kv" id="memTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>系統操作</h2>
+      <div class="row gap">
+        <button id="rebootBtn">重新啟動</button>
+        <button class="danger" id="factoryBtn">恢復原廠設定</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RJ45 設定 ===================== -->
+  <section class="page" id="page-eth">
+    <h1>RJ45 設定</h1>
+    <div class="card">
+      <form id="ethForm" class="form">
+        <label class="switch"><input type="checkbox" name="dhcp" id="ethDhcp"> 使用 DHCP 自動取得 IP</label>
+        <div id="ethStatic">
+          <label>IP 位址<input name="ip" placeholder="192.168.1.200"></label>
+          <label>子網路遮罩<input name="mask" placeholder="255.255.255.0"></label>
+          <label>預設閘道<input name="gw" placeholder="192.168.1.1"></label>
+          <label>DNS 伺服器<input name="dns" placeholder="8.8.8.8"></label>
+        </div>
+        <label>主機名稱 (hostname / mDNS)<input name="hostname" maxlength="31"></label>
+        <p class="muted">儲存後裝置會重新啟動。目前 RJ45 IP：<b id="ethCurIp">-</b></p>
+        <button type="submit">儲存並重新啟動</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===================== WiFi 設定 ===================== -->
+  <section class="page" id="page-wifi">
+    <h1>WiFi 設定</h1>
+    <div class="grid">
+      <div class="card">
+        <h2>WiFi STA 連線 <span class="badge" id="wifiStaBadge"></span></h2>
+        <form id="wifiForm" class="form">
+          <label>SSID<input name="ssid" id="wifiSsid" maxlength="32" required></label>
+          <label>密碼<input name="pass" id="wifiPass" type="password" maxlength="64" placeholder="開放式網路請留空"></label>
+          <label class="switch"><input type="checkbox" id="wifiShowPass"> 顯示密碼</label>
+          <div class="row gap">
+            <button type="submit">儲存並連線</button>
+            <button type="button" class="danger" id="wifiClearBtn">清除 WiFi 設定</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h2>掃描附近 WiFi</h2>
+        <button id="scanBtn">開始掃描</button>
+        <table class="list clickable">
+          <thead><tr><th>SSID</th><th class="r">訊號</th><th class="r">頻道</th><th>加密</th></tr></thead>
+          <tbody id="scanList"><tr><td colspan="4" class="muted">尚未掃描</td></tr></tbody>
+        </table>
+        <p class="muted">點選列表中的網路即可帶入 SSID。</p>
+      </div>
+      <div class="card">
+        <h2>WiFi AP (熱點)</h2>
+        <form id="apForm" class="form">
+          <label>AP SSID<input name="ssid" maxlength="32" required></label>
+          <label>AP 密碼<input name="pass" type="password" maxlength="64" placeholder="至少 8 碼，留空為開放式"></label>
+          <p class="muted">AP 固定 IP：192.168.4.1。儲存後裝置會重新啟動。</p>
+          <button type="submit">儲存並重新啟動</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RTK 數據 ===================== -->
+  <section class="page" id="page-rtk">
+    <h1>RTK 地面基地站數據</h1>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">基站狀態</div><div class="stat-value" id="sState">-</div></div>
+      <div class="stat"><div class="stat-label">GNSS 定位</div><div class="stat-value" id="sFix">-</div></div>
+      <div class="stat"><div class="stat-label">使用衛星</div><div class="stat-value" id="sSats">-</div></div>
+      <div class="stat"><div class="stat-label">HDOP</div><div class="stat-value" id="sHdop">-</div></div>
+      <div class="stat"><div class="stat-label">RTCM 輸出</div><div class="stat-value" id="sRtcm">-</div></div>
+      <div class="stat"><div class="stat-label">連線用戶</div><div class="stat-value" id="sClients">-</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card" id="surveyCard">
+        <h2>Survey-in 進度</h2>
+        <div class="bar"><div class="bar-fill" id="svTimeBar"></div></div>
+        <p class="muted" id="svTimeText"></p>
+        <div class="bar"><div class="bar-fill alt" id="svAccBar"></div></div>
+        <p class="muted" id="svAccText"></p>
+        <table class="kv" id="svTable"></table>
+        <div class="row gap">
+          <button id="svRestartBtn">重新 Survey-in</button>
+          <button id="svSaveBtn">將結果存為固定座標</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>基站座標 <span class="badge" id="baseBadge"></span></h2>
+        <table class="kv" id="baseTable"></table>
+      </div>
+      <div class="card">
+        <h2>即時 GNSS 定位</h2>
+        <table class="kv" id="gnssTable"></table>
+      </div>
+      <div class="card">
+        <h2>差分修正量 (基站已知座標 − 即時量測)</h2>
+        <div class="enu">
+          <div><span>ΔE</span><b id="cE">-</b></div>
+          <div><span>ΔN</span><b id="cN">-</b></div>
+          <div><span>ΔU</span><b id="cU">-</b></div>
+        </div>
+        <canvas id="scatter" width="320" height="320"></canvas>
+        <table class="kv" id="corrTable"></table>
+      </div>
+      <div class="card">
+        <h2>可見衛星</h2>
+        <div id="svBars" class="svbars"></div>
+      </div>
+      <div class="card">
+        <h2>RTCM3 訊息統計</h2>
+        <table class="list">
+          <thead><tr><th>類型</th><th>說明</th><th class="r">次數</th><th class="r">bytes</th><th class="r">秒前</th></tr></thead>
+          <tbody id="rtcmList"></tbody>
+        </table>
+        <table class="kv" id="rtcmTable"></table>
+      </div>
+      <div class="card">
+        <h2>差分資料輸出</h2>
+        <table class="kv" id="outTable"></table>
+        <table class="list">
+          <thead><tr><th>用戶 IP</th><th>類型</th><th class="r">bytes</th><th class="r">秒</th></tr></thead>
+          <tbody id="clientList"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>NMEA 即時監看 <label class="switch inline"><input type="checkbox" id="nmeaPause"> 暫停</label></h2>
+      <pre class="console" id="nmeaConsole"></pre>
+    </div>
+  </section>
+
+  <!-- ===================== 基站 / 輸出設定 ===================== -->
+  <section class="page" id="page-rtk-cfg">
+    <h1>基站 / 輸出設定</h1>
+    <div class="grid">
+      <div class="card">
+        <h2>基站設定</h2>
+        <form id="rtkForm" class="form">
+          <label>GNSS 序列埠鮑率
+            <select name="gnssBaud">
+              <option>9600</option><option>19200</option><option>38400</option>
+              <option>57600</option><option>115200</option><option>230400</option>
+              <option>460800</option><option>921600</option>
+            </select>
+          </label>
+          <label>基站座標模式
+            <select name="baseMode" id="baseMode">
+              <option value="0">Survey-in (自動平均定位)</option>
+              <option value="1">固定座標 (已知點)</option>
+            </select>
+          </label>
+          <div id="svFields">
+            <label>Survey-in 最短時間 (秒)<input name="surveyMinSec" type="number" min="10" max="86400"></label>
+            <label>3D 標準差門檻 (m)<input name="surveyAccM" type="number" step="0.01" min="0.01" max="100"></label>
+          </div>
+          <div id="fixFields">
+            <label>緯度 (度)<input name="fixedLat" type="number" step="0.000000001"></label>
+            <label>經度 (度)<input name="fixedLon" type="number" step="0.000000001"></label>
+            <label>橢球高 (m)<input name="fixedH" type="number" step="0.0001"></label>
+          </div>
+          <label>基站 ID (0~4095)<input name="stationId" type="number" min="0" max="4095"></label>
+          <label class="switch"><input type="checkbox" name="inject1005"> 自動產生 RTCM 1005 (接收機未輸出時)</label>
+          <label>1005 輸出間隔 (秒)<input name="rtcm1005Interval" type="number" min="1" max="300"></label>
+          <label class="switch"><input type="checkbox" name="outputDiffNmea"> 輸出 $PRTKD 位置域差分修正語句</label>
+          <button type="submit">套用</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>差分資料輸出</h2>
+        <form id="outForm" class="form">
+          <h3>內建 NTRIP Caster / TCP</h3>
+          <label class="switch"><input type="checkbox" name="tcpEnable"> 啟用</label>
+          <label>TCP 埠<input name="tcpPort" type="number" min="1" max="65535"></label>
+          <label>掛載點 (Mountpoint)<input name="casterMount" maxlength="32"></label>
+          <p class="muted">NTRIP Client 連線 <code>本機IP:埠/掛載點</code>；純 TCP Client 連線後直接收到 RTCM。</p>
+          <h3>推送至外部 NTRIP Caster (NTRIP Server Rev1)</h3>
+          <label class="switch"><input type="checkbox" name="ntripEnable"> 啟用</label>
+          <label>Caster 主機<input name="ntripHost" placeholder="rtk2go.com"></label>
+          <label>Caster 埠<input name="ntripPort" type="number" min="1" max="65535"></label>
+          <label>掛載點<input name="ntripMount"></label>
+          <label>密碼<input name="ntripPass" type="password" placeholder="留空表示不變更"></label>
+          <button type="submit">套用</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== OTA ===================== -->
+  <section class="page" id="page-ota">
+    <h1>OTA 更新</h1>
+    <div class="card">
+      <h2>上傳更新檔</h2>
+      <form id="otaForm" class="form">
+        <label>更新目標
+          <select id="otaTarget">
+            <option value="fw">韌體 (WT32-ETH01_RTK.ino.bin)</option>
+            <option value="fs">SPIFFS 網頁映像 (spiffs.bin)</option>
+          </select>
+        </label>
+        <label>檔案<input type="file" id="otaFile" accept=".bin" required></label>
+        <button type="submit" id="otaBtn">開始更新</button>
+      </form>
+      <div class="bar"><div class="bar-fill" id="otaBar"></div></div>
+      <p id="otaMsg" class="muted"></p>
+      <table class="kv" id="otaInfo"></table>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
