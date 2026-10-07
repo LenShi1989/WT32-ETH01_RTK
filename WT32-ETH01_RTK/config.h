@@ -10,7 +10,7 @@
 #endif
 
 #define FW_NAME    "WT32-ETH01 RTK Base"
-#define FW_VERSION "1.0.0"
+#define FW_VERSION "1.1.0"
 
 // ---------- GNSS 模組：YIC GT-504GGB (UART/TTL 3.3V，免 MAX3232) ----------
 //  GT-504GGB-JST    : 1 GND(黑)  2 VCC(紅)  3 TXD(白)  4 RXD(綠)
