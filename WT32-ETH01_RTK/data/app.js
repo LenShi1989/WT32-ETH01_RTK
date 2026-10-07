@@ -386,6 +386,8 @@ const RTCM_DESC = {
   4072: 'u-blox 專有',
 };
 
+const MODE_TEXT = { N: '無效', A: '自主定位', D: '差分', E: '推估' };
+const FIX_TYPE_TEXT = { 1: '未定位', 2: '2D', 3: '3D' };
 const STATE_TEXT = { wait_fix: ['等待定位', 'warn'], surveying: ['Survey-in 中', 'warn'], ready: ['運作中', 'ok'] };
 const corrHist = [];
 
@@ -453,24 +455,37 @@ async function refreshRtk() {
 
   // ---- GNSS ----
   kv('gnssTable', [
-    ['接收狀態', g.receiving ? `接收中 (${g.baud} bps)` : `無資料 (${g.baud} bps)`],
+    ['接收狀態', !g.receiving ? `無資料 (${g.baud} bps)，請檢查接線 / 供電`
+      : g.nmeaOk ? `接收中 (${g.baud} bps)` : `有資料但 NMEA 無效 (${g.baud} bps)${g.autoBaud ? '，自動偵測鮑率中' : '，請確認鮑率'}`],
     ['定位品質', `${g.qualityName} (${g.quality})`],
-    ['UTC', g.utcDate ? `20${g.utcDate.slice(4, 6)}-${g.utcDate.slice(2, 4)}-${g.utcDate.slice(0, 2)} ${g.utcTime.slice(0, 2)}:${g.utcTime.slice(2, 4)}:${g.utcTime.slice(4)}` : g.utcTime || '-'],
+    ['RMC 狀態 / 模式', `${g.rmcStatus === 'A' ? '有效' : '警告'} / ${MODE_TEXT[g.mode] || g.mode}`],
+    ['UTC', (g.date ? g.date + ' ' : '') + (g.utcTime ? `${g.utcTime.slice(0, 2)}:${g.utcTime.slice(2, 4)}:${g.utcTime.slice(4)}` : '-')],
     ['緯度', num(g.lat, 9) + '°'],
     ['經度', num(g.lon, 9) + '°'],
     ['海拔高 (MSL)', num(g.altMsl, 3) + ' m'],
     ['大地起伏', num(g.geoidSep, 3) + ' m'],
     ['橢球高', num(g.hEll, 3) + ' m'],
+    ['定位型態', FIX_TYPE_TEXT[g.fixType] || '-'],
     ['PDOP / HDOP / VDOP', `${num(g.pdop, 2)} / ${num(g.hdop, 2)} / ${num(g.vdop, 2)}`],
+    ['速度 / 航向', `${num(g.speedKmh, 2)} km/h / ${num(g.course, 1)}°`],
+    ['差分齡期 / 站號', g.dgpsAge >= 0 ? `${num(g.dgpsAge, 1)} s / ${g.dgpsStation}` : '未使用'],
+    ...(g.pps === undefined ? [] : [['1PPS', g.pps ? `正常 (${g.ppsCount})` : '無脈衝']]),
     ['接收位元組', fmtBytes(g.bytesIn)],
     ['NMEA (錯誤)', `${g.nmeaCount} (${g.nmeaErrors})`],
     ['RTCM (CRC 錯誤)', `${g.rtcmCount} (${g.rtcmErrors})`],
   ]);
 
   // ---- 衛星 ----
-  const svs = [['GPS', g.svGps], ['GLONASS', g.svGlo], ['Galileo', g.svGal], ['BeiDou', g.svBds], ['QZSS', g.svQzss], ['其他', g.svOther]];
-  $('svBars').innerHTML = svs.map(([n, v]) => `<div class="svrow"><span>${n}</span>
-    <div class="bar"><div class="bar-fill" style="width:${Math.min(100, v / 30 * 100)}%"></div></div><b>${v}</b></div>`).join('');
+  $('svBars').innerHTML = g.systems.filter(([, v]) => v > 0).map(([n, v, u]) => `<div class="svrow"><span>${esc(n)}</span>
+    <div class="bar"><div class="bar-fill" style="width:${Math.min(100, v / 20 * 100)}%"></div></div><b>${u}/${v}</b></div>`).join('')
+    || '<p class="muted">尚未收到 GSV 衛星資料</p>';
+  const sats = g.satList.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  $('satList').innerHTML = sats.map(([sys, prn, el, az, snr, used]) => `<tr class="${used ? 'used' : ''}">
+    <td>${esc(g.systems[sys] ? g.systems[sys][0] : '?')}</td><td class="r">${prn}</td>
+    <td class="r">${el < 0 ? '-' : el + '°'}</td><td class="r">${az < 0 ? '-' : az + '°'}</td>
+    <td><div class="snr"><div class="bar"><div class="bar-fill ${snr >= 35 ? 'alt' : snr >= 25 ? 'mid' : 'low'}" style="width:${snr < 0 ? 0 : Math.min(100, snr / 50 * 100)}%"></div></div>
+    <span>${snr < 0 ? '-' : snr}</span></div></td><td>${used ? '✔' : ''}</td></tr>`).join('')
+    || '<tr><td colspan="6" class="muted">無</td></tr>';
 
   // ---- 差分修正 ----
   const c = r.corr;

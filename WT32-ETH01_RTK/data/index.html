@@ -203,8 +203,14 @@
         <table class="kv" id="corrTable"></table>
       </div>
       <div class="card">
-        <h2>可見衛星</h2>
+        <h2>可見衛星 <span class="muted">(使用中 / 可見)</span></h2>
         <div id="svBars" class="svbars"></div>
+        <div class="scroll">
+          <table class="list sats">
+            <thead><tr><th>系統</th><th class="r">PRN</th><th class="r">仰角</th><th class="r">方位</th><th>C/N0 (dB-Hz)</th><th>使用</th></tr></thead>
+            <tbody id="satList"></tbody>
+          </table>
+        </div>
       </div>
       <div class="card">
         <h2>RTCM3 訊息統計</h2>
@@ -260,6 +266,7 @@
             <label>橢球高 (m)<input name="fixedH" type="number" step="0.0001"></label>
           </div>
           <label>基站 ID (0~4095)<input name="stationId" type="number" min="0" max="4095"></label>
+          <p class="muted">GT-504GGB 出廠為 115200 bps；韌體收不到有效 NMEA 時會自動輪詢鮑率並儲存。</p>
           <label class="switch"><input type="checkbox" name="inject1005"> 自動產生 RTCM 1005 (接收機未輸出時)</label>
           <label>1005 輸出間隔 (秒)<input name="rtcm1005Interval" type="number" min="1" max="300"></label>
           <label class="switch"><input type="checkbox" name="outputDiffNmea"> 輸出 $PRTKD 位置域差分修正語句</label>

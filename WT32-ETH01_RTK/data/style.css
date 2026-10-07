@@ -146,6 +146,13 @@ button.danger { background: var(--bad); }
 .svbars { display: grid; gap: 8px; }
 .svrow { display: grid; grid-template-columns: 70px 1fr 32px; align-items: center; gap: 8px; font-size: 12px; }
 .svrow .bar { margin: 0; }
+.scroll { max-height: 320px; overflow: auto; margin-top: 12px; }
+.sats td { padding-top: 3px; padding-bottom: 3px; }
+.sats tr:not(.used) td { color: var(--muted); }
+.snr { display: grid; grid-template-columns: 1fr 24px; align-items: center; gap: 6px; min-width: 110px; }
+.snr .bar { margin: 0; height: 8px; }
+.bar-fill.mid { background: var(--warn); }
+.bar-fill.low { background: var(--bad); }
 
 /* ---------- NMEA ---------- */
 .console {
