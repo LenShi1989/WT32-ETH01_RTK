@@ -5,26 +5,26 @@
 
 ## 功能
 
-| 類別 | 內容 |
-|---|---|
-| 網路 | RJ45 DHCP / 固定 IP 上網 (預設路由優先走 RJ45)、WiFi STA + AP 同時運作、mDNS (`http://wt32-rtk.local`) |
-| GNSS | UART2 接收 GT-504GGB NMEA (GGA / GLL / GSA / GSV / RMC / VTG / ZDA)，checksum 驗證、自動鮑率偵測、逐顆衛星 C/N0 與使用狀態；亦可轉送 RTCM3 (CRC24Q 驗證) |
-| RTK 基站 | Survey-in 自動平均定位 / 固定已知座標、位置域差分修正量 (ΔE/ΔN/ΔU)、自產 RTCM 1005 |
-| 差分輸出 | 內建 NTRIP Caster (TCP 2101，同時支援純 TCP Client)、NTRIP Server Rev1 推送到外部 Caster (如 rtk2go) |
-| 網頁 | SPIFFS 網頁、側邊欄介面：系統狀態 / 網路設定 / RTK 數據 / OTA 更新 |
+| 類別     | 內容                                                                                                                                                     |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 網路     | RJ45 DHCP / 固定 IP 上網 (預設路由優先走 RJ45)、WiFi STA + AP 同時運作、mDNS (`http://wt32-rtk.local`)                                                   |
+| GNSS     | UART2 接收 GT-504GGB NMEA (GGA / GLL / GSA / GSV / RMC / VTG / ZDA)，checksum 驗證、自動鮑率偵測、逐顆衛星 C/N0 與使用狀態；亦可轉送 RTCM3 (CRC24Q 驗證) |
+| RTK 基站 | Survey-in 自動平均定位 / 固定已知座標、位置域差分修正量 (ΔE/ΔN/ΔU)、自產 RTCM 1005                                                                       |
+| 差分輸出 | 內建 NTRIP Caster (TCP 2101，同時支援純 TCP Client)、NTRIP Server Rev1 推送到外部 Caster (如 rtk2go)                                                     |
+| 網頁     | SPIFFS 網頁、側邊欄介面：系統狀態 / 網路設定 / RTK 數據 / OTA 更新                                                                                       |
 
 ## 硬體接線 (YIC GT-504GGB → WT32-ETH01)
 
 GT-504GGB 為 **UART/TTL 3.3V** 介面 (VOH ≥ 2.4V / VIH ≥ 2.0V)，**不需要 MAX3232**，直接接 WT32-ETH01 的 RXD2 / TXD2。
 預設 115200 bps、8N1、1Hz 更新，NMEA-0183 輸出。
 
-| GT-504GGB 線 (JST 版顏色) | WT32-ETH01 腳位 | 說明 |
-|---|---|---|
-| VCC (紅) | **3V3** | 模組 3.0~5.5V、約 32mA；接 3V3 確保 UART 輸出為 3.3V 準位 |
-| GND (黑) | GND | 共地 |
-| TXD (白) | **RXD (IO5 / RXD2)** | 模組輸出 NMEA → ESP32 接收 |
-| RXD (綠) | **TXD (IO17 / TXD2)** | ESP32 → 模組 (目前韌體不送指令，可不接) |
-| PPS (僅 -N 版) | IO39 (選配) | 1PPS 時間脈衝；啟用需把 `config.h` 的 `GNSS_PPS_PIN` 改為 `39` |
+| GT-504GGB 線 (JST 版顏色) | WT32-ETH01 腳位       | 說明                                                           |
+| ------------------------- | --------------------- | -------------------------------------------------------------- |
+| VCC (紅)                  | **3V3**               | 模組 3.0~5.5V、約 32mA；接 3V3 確保 UART 輸出為 3.3V 準位      |
+| GND (黑)                  | GND                   | 共地                                                           |
+| TXD (白)                  | **RXD (IO5 / RXD2)**  | 模組輸出 NMEA → ESP32 接收                                     |
+| RXD (綠)                  | **TXD (IO17 / TXD2)** | ESP32 → 模組 (目前韌體不送指令，可不接)                        |
+| PPS (僅 -N 版)            | IO39 (選配)           | 1PPS 時間脈衝；啟用需把 `config.h` 的 `GNSS_PPS_PIN` 改為 `39` |
 
 ```
  GT-504GGB                      WT32-ETH01
@@ -33,19 +33,19 @@ GT-504GGB 為 **UART/TTL 3.3V** 介面 (VOH ≥ 2.4V / VIH ≥ 2.0V)，**不需�
  │ GND (黑) ──┼───────────────►│ GND                  │
  │ TXD (白) ──┼───────────────►│ RXD  (IO5,  RXD2)    │
  │ RXD (綠) ◄─┼────────────────│ TXD  (IO17, TXD2)    │
- │ PPS      ──┼- - - - - - - -►│ IO39 (選配，僅輸入)  │
+ │ PPS      ──┼- - - - - - - -►│ IO39 (選配，僅輸入)   │
  └────────────┘                └──────────────────────┘
 ```
 
 各型號線序 (依規格書第 2 章)：
 
-| 型號 | 接頭 | 線序 |
-|---|---|---|
-| GT-504GGB-JST | 1.25mm JST 4P | 1 GND 黑 / 2 VCC 紅 / 3 TXD 白 / 4 RXD 綠 |
-| GT-504GGB-N2 | 4 線開放端 | VCC / GND / TXD / RXD |
-| GT-504GGB-N | 4 線開放端 | VCC / GND / TXD / **PPS** (無 RXD) |
-| GT-504GGB-E25 / E35 | 4 極 2.5 / 3.5mm 耳機插頭 | 1 VCC / 2 RXD / 3 TXD / 4 GND |
-| GT-504GGB-E253 / E353 | 3 極 2.5 / 3.5mm 耳機插頭 | 1 VCC / 2 TXD / 3 GND |
+| 型號                  | 接頭                      | 線序                                      |
+| --------------------- | ------------------------- | ----------------------------------------- |
+| GT-504GGB-JST         | 1.25mm JST 4P             | 1 GND 黑 / 2 VCC 紅 / 3 TXD 白 / 4 RXD 綠 |
+| GT-504GGB-N2          | 4 線開放端                | VCC / GND / TXD / RXD                     |
+| GT-504GGB-N           | 4 線開放端                | VCC / GND / TXD / **PPS** (無 RXD)        |
+| GT-504GGB-E25 / E35   | 4 極 2.5 / 3.5mm 耳機插頭 | 1 VCC / 2 RXD / 3 TXD / 4 GND             |
+| GT-504GGB-E253 / E353 | 3 極 2.5 / 3.5mm 耳機插頭 | 1 VCC / 2 TXD / 3 GND                     |
 
 > ⚠️ WT32-ETH01 腳位圖 (`docs/gpio_pin腳圖.jpg`) 中 TXD 誤標為 IO5，依規格書 V1.4 正確為 **RXD = IO5 (RXD2)、TXD = IO17 (TXD2)**。
 > 板上 LED3 / LED4 分別接在 RXD2 / TXD2，收到 GNSS 資料時 LED3 會閃爍。
@@ -54,15 +54,15 @@ GT-504GGB 為 **UART/TTL 3.3V** 介面 (VOH ≥ 2.4V / VIH ≥ 2.0V)，**不需�
 
 ### GT-504GGB 輸出語句與解析
 
-| 語句 | 解析內容 |
-|---|---|
-| `$GNGGA` | UTC、經緯度、定位品質 (0 無 / 1 SPS / 2 DGPS / 3 PPS / 6 推估)、使用衛星數、HDOP、海拔、大地起伏、差分齡期 / 站號 |
-| `$GNGLL` | 模式指示 (N / A / D / E) |
-| `$GNGSA` | 2D/3D、PDOP / HDOP / VDOP、使用中衛星 PRN (每系統一句，以 GNSS System ID 1 GPS / 2 GLONASS / 3 Galileo / 4 BDS 區分) |
-| `$GPGSV` `$GLGSV` `$GAGSV` `$GBGSV` | 各系統可見衛星：PRN、仰角、方位角、C/N0 (GPGSV 內 PRN 33~64 為 SBAS、193~ 為 QZSS) |
-| `$GNRMC` | 狀態 A/V、日期、速度、航向、模式 |
-| `$GNVTG` | 航向、速度 (節 / km/h) |
-| `$GNZDA` | 4 位數年份日期 (選配) |
+| 語句                                | 解析內容                                                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `$GNGGA`                            | UTC、經緯度、定位品質 (0 無 / 1 SPS / 2 DGPS / 3 PPS / 6 推估)、使用衛星數、HDOP、海拔、大地起伏、差分齡期 / 站號    |
+| `$GNGLL`                            | 模式指示 (N / A / D / E)                                                                                             |
+| `$GNGSA`                            | 2D/3D、PDOP / HDOP / VDOP、使用中衛星 PRN (每系統一句，以 GNSS System ID 1 GPS / 2 GLONASS / 3 Galileo / 4 BDS 區分) |
+| `$GPGSV` `$GLGSV` `$GAGSV` `$GBGSV` | 各系統可見衛星：PRN、仰角、方位角、C/N0 (GPGSV 內 PRN 33~64 為 SBAS、193~ 為 QZSS)                                   |
+| `$GNRMC`                            | 狀態 A/V、日期、速度、航向、模式                                                                                     |
+| `$GNVTG`                            | 航向、速度 (節 / km/h)                                                                                               |
+| `$GNZDA`                            | 4 位數年份日期 (選配)                                                                                                |
 
 韌體若收到資料但一直沒有 checksum 正確的 NMEA，會自動依序嘗試 115200 / 9600 / 38400 / 57600 / 230400 / 460800 / 921600 / 19200 / 4800 bps，
 找到後存入設定 (可在 `config.h` 以 `GNSS_AUTO_BAUD 0` 關閉)。
@@ -131,23 +131,23 @@ tools/build_spiffs.ps1   產生 SPIFFS 映像
 
 ## HTTP API
 
-| 方法 | 路徑 | 說明 |
-|---|---|---|
-| GET | `/api/status` | 系統、網路、SPIFFS 狀態 |
-| GET | `/api/config` | 所有設定 (密碼不回傳) |
-| POST | `/api/eth` | `dhcp, ip, mask, gw, dns, hostname` (重新啟動) |
-| POST | `/api/wifi` | `ssid, pass` |
-| POST | `/api/wifi/clear` | 清除 WiFi STA 設定 |
-| GET | `/api/wifi/scan[?start=1]` | 啟動 / 取得 WiFi 掃描結果 |
-| POST | `/api/ap` | `ssid, pass` (重新啟動) |
-| GET | `/api/rtk` | GNSS、基站、差分修正、RTCM、輸出狀態 |
-| GET | `/api/nmea` | 最近 NMEA 語句 |
-| POST | `/api/rtk/config` | 基站設定 |
-| POST | `/api/rtk/restart` | 重新 Survey-in |
-| POST | `/api/rtk/savefixed` | Survey-in 結果存為固定座標 |
-| POST | `/api/output` | Caster / NTRIP Server 設定 |
-| POST | `/api/fs/upload`, `/api/fs/delete`, `/api/fs/format` | SPIFFS 檔案管理 |
-| POST | `/api/ota?target=fw\|fs` | OTA 更新韌體 / SPIFFS |
-| POST | `/api/reboot`, `/api/factory` | 重新啟動 / 恢復原廠設定 |
+| 方法 | 路徑                                                 | 說明                                           |
+| ---- | ---------------------------------------------------- | ---------------------------------------------- |
+| GET  | `/api/status`                                        | 系統、網路、SPIFFS 狀態                        |
+| GET  | `/api/config`                                        | 所有設定 (密碼不回傳)                          |
+| POST | `/api/eth`                                           | `dhcp, ip, mask, gw, dns, hostname` (重新啟動) |
+| POST | `/api/wifi`                                          | `ssid, pass`                                   |
+| POST | `/api/wifi/clear`                                    | 清除 WiFi STA 設定                             |
+| GET  | `/api/wifi/scan[?start=1]`                           | 啟動 / 取得 WiFi 掃描結果                      |
+| POST | `/api/ap`                                            | `ssid, pass` (重新啟動)                        |
+| GET  | `/api/rtk`                                           | GNSS、基站、差分修正、RTCM、輸出狀態           |
+| GET  | `/api/nmea`                                          | 最近 NMEA 語句                                 |
+| POST | `/api/rtk/config`                                    | 基站設定                                       |
+| POST | `/api/rtk/restart`                                   | 重新 Survey-in                                 |
+| POST | `/api/rtk/savefixed`                                 | Survey-in 結果存為固定座標                     |
+| POST | `/api/output`                                        | Caster / NTRIP Server 設定                     |
+| POST | `/api/fs/upload`, `/api/fs/delete`, `/api/fs/format` | SPIFFS 檔案管理                                |
+| POST | `/api/ota?target=fw\|fs`                             | OTA 更新韌體 / SPIFFS                          |
+| POST | `/api/reboot`, `/api/factory`                        | 重新啟動 / 恢復原廠設定                        |
 
 > 網頁與 API 沒有登入驗證，請只在受信任的區域網路中使用。
