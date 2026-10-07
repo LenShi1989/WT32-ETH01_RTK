@@ -452,9 +452,30 @@ void otaDone() {
 }
 
 // ---------------------------------------------------------------
+//  Captive Portal：AP 用戶端以非本機網域連入 (如 OS 的連網探測
+//  connectivitycheck.gstatic.com / captive.apple.com / msftconnecttest.com)
+//  一律 302 轉到設定首頁，讓手機/電腦連上 AP 後自動開啟瀏覽器
+// ---------------------------------------------------------------
+bool captiveRedirect() {
+  if (server.client().localIP() != AP_IP) return false;  // 只處理 AP 介面
+  String host = server.hostHeader();
+  int colon = host.indexOf(':');
+  if (colon >= 0) host = host.substring(0, colon);
+  if (host.isEmpty() || validIp(host)) return false;
+  if (host.equalsIgnoreCase(settings.hostname) || host.equalsIgnoreCase(settings.hostname + ".local")) return false;
+
+  server.sendHeader("Location", String("http://") + AP_IP.toString() + "/", true);
+  server.sendHeader("Cache-Control", "no-store");
+  server.send(302, "text/plain", "");
+  return true;
+}
+
+// ---------------------------------------------------------------
 //  靜態檔案
 // ---------------------------------------------------------------
 void serveStatic() {
+  if (captiveRedirect()) return;
+
   String path = server.uri();
   if (path.endsWith("/")) path += "index.html";
 

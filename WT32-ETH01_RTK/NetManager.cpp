@@ -6,6 +6,7 @@
 #include <ETH.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>
+#include <DNSServer.h>
 
 namespace {
 
@@ -14,6 +15,7 @@ volatile bool ethIp = false;
 volatile bool staIp = false;
 uint32_t staRetryAt = 0;
 bool scanRequested = false;
+DNSServer dnsServer;  // Captive Portal：AP 用戶端的所有網域都解析到本機
 
 void onNetEvent(arduino_event_id_t event, arduino_event_info_t info) {
   switch (event) {
@@ -85,6 +87,10 @@ void startWifi() {
   const char *apPass = settings.apPass.length() >= 8 ? settings.apPass.c_str() : nullptr;
   WiFi.softAP(settings.apSsid.c_str(), apPass);
 
+  // 手機/電腦連上 AP 後會探測連網狀態，DNS 全部指向本機即可觸發自動彈出網頁
+  dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+  dnsServer.start(53, "*", AP_IP);
+
   WiFi.setAutoReconnect(true);
   if (!settings.staSsid.isEmpty()) {
     WiFi.begin(settings.staSsid.c_str(), settings.staPass.c_str());
@@ -125,6 +131,8 @@ void begin() {
 }
 
 void loop() {
+  dnsServer.processNextRequest();
+
   // STA 長時間連不上時定期重試 (避免持續掃描頻道干擾 AP)
   if (!settings.staSsid.isEmpty() && WiFi.status() != WL_CONNECTED && millis() > staRetryAt) {
     staRetryAt = millis() + 30000;
