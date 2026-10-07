@@ -29,7 +29,7 @@
 #define GNSS_DEFAULT_BAUD  115200     // GT-504GGB 出廠 115200 bps, 8N1, 1Hz
 #define GNSS_RX_BUFFER     8192
 #define GNSS_AUTO_BAUD     1          // 收到資料但 NMEA 一直無效時，自動輪詢鮑率 (4800~921600)
-#define GNSS_PPS_PIN       -1         // 1PPS 輸入腳 (-1 = 不使用)；IO39 為僅輸入腳，未接線時請保持 -1
+#define GNSS_PPS_PIN       39         // 1PPS 輸入腳 (-1 = 不使用)；IO39 為僅輸入腳，未接線時請保持 -1
 
 // ---------- 網路預設值 ----------
 #define DEFAULT_HOSTNAME   "wt32-rtk"
