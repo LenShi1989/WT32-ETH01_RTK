@@ -8,7 +8,7 @@
 # =============================================================
 param(
   [string]$DataDir = "$PSScriptRoot\..\WT32-ETH01_RTK\data",
-  [string]$OutFile = "$PSScriptRoot\..\build\spiffs.bin",
+  [string]$OutFile = "$PSScriptRoot\..\WT32-ETH01_RTK\build\spiffs.bin",
   [int]$Size = 0x160000
 )
 
